@@ -1,1 +1,87 @@
 /* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* src/styles.css */
+
+/* src/styles.css */
+
+@media print {
+  /* 1. Ocultamos TODO lo que esté en el body */
+  body * {
+    visibility: hidden;
+    margin: 0;
+  }
+
+  /* 2. Forzamos que el ticket y todos sus hijos sean visibles */
+  #printable-receipt, 
+  #printable-receipt * {
+    visibility: visible !important;
+  }
+
+  /* 3. Posicionamiento absoluto para que empiece desde el inicio del papel */
+  #printable-receipt {
+    visibility: visible !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%; /* El contenedor ocupará el ancho del papel */
+    padding: 0;
+    margin: 0;
+    display: block !important;
+  }
+
+  /* 4. Ocultar elementos de la interfaz que podrían bloquear la vista */
+  .no-print, 
+  .no-print-overlay, 
+  .fixed, 
+  .absolute {
+    /* Si no es el ticket, lo eliminamos del flujo de impresión */
+    display: none !important; 
+  }
+  
+  /* Re-habilitamos el área de impresión específica aunque sea absolute */
+  #printable-receipt {
+    display: block !important;
+  }
+
+  /* Configuración de página para eliminar cabeceras del navegador (fecha, url) */
+  @page {
+    margin: 0;
+    size: auto;
+  }
+}/* src/styles.css */
+@media print {
+  /* Ocultar absolutamente todo el contenedor de Angular */
+  app-root > *:not(.print-container) {
+    display: none !important;
+  }
+
+  /* Forzar que el body y html permitan scroll y contenido largo */
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: white !important;
+  }
+
+  /* Estilo del contenedor de impresión */
+  .print-container {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 80mm; /* Ajusta a 58mm si tu impresora es pequeña */
+    margin: 0 auto;
+    padding: 5mm;
+    font-family: 'Courier New', Courier, monospace;
+    color: black !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}

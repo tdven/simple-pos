@@ -1,0 +1,350 @@
+<div class="flex h-screen bg-gray-100 font-sans overflow-hidden">
+    <div class="w-1/3 flex flex-col bg-white border-r shadow-lg z-10">
+        <div class="p-4 border-b bg-indigo-700 text-white">
+            <h1 class="text-xl font-bold">POS</h1>
+        </div>
+
+
+        <div class="p-4 bg-white border-b border-gray-100 mb-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Customer</h4>
+                        <p class="font-bold text-gray-800">{{ selectedCustomer()?.name || 'Walk-in Customer' }}</p>
+                    </div>
+                </div>
+                <button (click)="openCustomerModal()"
+                    class="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-3">
+            @for (item of cart(); track item.product_id) {
+            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border">
+                <div class="flex-1">
+                    <p class="font-bold text-gray-800">{{ item.name }}</p>
+                    <p class="text-xs text-gray-500">{{ item.qty }} unit(s) x {{ item.price | currency }}</p>
+                </div>
+                <div class="text-right flex items-center gap-3">
+                    <span class="font-bold text-indigo-600">{{ item.subtotal | currency }}</span>
+                    <button (click)="removeFromCart(item.product_id)" class="text-red-400 hover:text-red-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            } @empty {
+            <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                </svg>
+                <p>Your cart is empty</p>
+            </div>
+            }
+        </div>
+
+        <div class="p-6 bg-white border-t space-y-3">
+            <div class="flex justify-between text-gray-600 text-sm">
+                <span>Subtotal</span>
+                <span>{{ totals().subtotal | currency }}</span>
+            </div>
+            <div class="flex justify-between text-xl font-black text-gray-900 pt-2">
+                <span>Payable</span>
+                <span>{{ totals().total | currency }}</span>
+            </div>
+            <button (click)="openPaymentModal()" [disabled]="cart().length === 0"
+                class="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 disabled:bg-gray-200 disabled:text-gray-400 transition-all shadow-md">
+                COMPLETE PAYMENT
+            </button>
+        </div>
+    </div>
+
+    <div class="w-2/3 flex flex-col p-6">
+        <div class="flex gap-4 mb-6">
+            <input type="text" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)"
+                placeholder="Search products..."
+                class="flex-1 px-4 py-3 rounded-xl border-0 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600">
+
+            <div class="flex gap-2">
+                <button (click)="selectedCategoryId.set(null)"
+                    [class]="selectedCategoryId() === null ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600'"
+                    class="px-5 py-2 rounded-xl shadow-sm border font-medium">All</button>
+                @for (cat of categories(); track cat.id) {
+                <button (click)="selectedCategoryId.set(cat.id)"
+                    [class]="selectedCategoryId() === cat.id ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600'"
+                    class="px-5 py-2 rounded-xl shadow-sm border font-medium">{{ cat.name }}</button>
+                }
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pb-10">
+            @for (prod of filteredProducts(); track prod.id) {
+            <div (click)="addToCart(prod)"
+                class="bg-white p-4 rounded-xl shadow-sm border border-transparent hover:border-indigo-500 cursor-pointer transition-all transform hover:-translate-y-1">
+                <!-- <div                    class="aspect-square bg-gray-50 rounded-xl mb-4 overflow-hidden flex items-center justify-center text-gray-300"> -->
+                <div
+                    class="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center text-gray-400 overflow-hidden">
+                    @if (prod.image) {
+                    <img [src]="prod.image"
+                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    } @else {
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    }
+                </div>
+                <!-- <div class="h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center text-gray-400">
+                    <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div> -->
+                <h3 class="font-bold text-gray-800">{{ prod.name }}</h3>
+                <p class="text-indigo-600 font-bold mt-1">{{ prod.price | currency }}</p>
+            </div>
+            }
+        </div>
+    </div>
+
+    @if (isPaymentModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" (click)="closePaymentModal()"></div>
+
+        <div
+            class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-800">Finalize Payment</h2>
+                <button (click)="closePaymentModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-8 space-y-6">
+                <div class="text-center">
+                    <p class="text-sm text-gray-500 uppercase tracking-widest font-semibold">Amount to Pay</p>
+                    <p class="text-5xl font-black text-indigo-700 mt-1">{{ totals().total | currency }}</p>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    @for (method of paymentMethodsList; track method) {
+                    <button (click)="paymentMethod.set(method)"
+                        [class]="paymentMethod() === method ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-gray-50 text-gray-600 border-gray-200'"
+                        class="py-3 rounded-xl border-2 font-bold transition-all text-sm">
+                        {{ method }}
+                    </button>
+                    }
+                </div>
+
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-700">Amount Received</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400">$</span>
+                        <input type="number" [(ngModel)]="amountReceived"
+                            class="w-full pl-8 pr-4 py-4 bg-gray-50 rounded-2xl text-2xl font-bold focus:ring-2 focus:ring-indigo-500 outline-none border-none shadow-inner">
+                    </div>
+                </div>
+
+                @if (paymentMethod() === 'Cash') {
+                <div class="bg-orange-50 p-4 rounded-2xl flex justify-between items-center border border-orange-100">
+                    <span class="text-orange-800 font-bold">Change to Return:</span>
+                    <span class="text-2xl font-black text-orange-600">{{ changeDue() | currency }}</span>
+                </div>
+                }
+            </div>
+
+            <div class="p-6 bg-gray-50 flex gap-3">
+                <button (click)="closePaymentModal()"
+                    class="flex-1 py-4 font-bold text-gray-600 hover:text-gray-800">Cancel</button>
+                <button (click)="confirmFinalPayment()"
+                    class="flex-[2] bg-indigo-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all">
+                    Confirm Sale
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+</div>
+
+@if (isCustomerModalOpen()) {
+<div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" (click)="isCustomerModalOpen.set(false)"></div>
+
+    <div class="relative bg-white w-full max-w-md rounded-3xl shadow-2xl flex flex-col max-h-[80vh]">
+        <div class="p-6 border-b">
+            <h2 class="text-2xl font-bold text-gray-800">Select Customer</h2>
+
+            <div class="mt-4 relative">
+                <input type="text" [ngModel]="customerSearchText()" (ngModelChange)="customerSearchText.set($event)"
+                    placeholder="Search by name or phone..."
+                    class="w-full pl-10 pr-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500">
+                <svg class="w-5 h-5 absolute left-3 top-3.5 text-gray-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-2 custom-scrollbar">
+            <button (click)="selectCustomer(null)"
+                class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border-2 mb-2"
+                [class]="!selectedCustomer() ? 'border-indigo-600 bg-indigo-50' : 'border-transparent'">
+                <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <div class="text-left">
+                    <p class="font-bold text-gray-800">Walk-in Customer</p>
+                    <p class="text-xs text-gray-500">No specific record</p>
+                </div>
+            </button>
+
+            <div class="h-px bg-gray-100 my-2 mx-4"></div>
+
+            @for (cust of filteredCustomers(); track cust.id) {
+            <button (click)="selectCustomer(cust)"
+                class="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border-2 mb-2"
+                [class]="selectedCustomer()?.id === cust.id ? 'border-indigo-600 bg-indigo-50' : 'border-transparent'">
+                <div
+                    class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                    {{ cust.name.substring(0,2).toUpperCase() }}
+                </div>
+                <div class="text-left">
+                    <p class="font-bold text-gray-800">{{ cust.name }}</p>
+                    <p class="text-xs text-gray-500">{{ cust.phone }} • {{ cust.email }}</p>
+                </div>
+            </button>
+            } @empty {
+            <div class="p-8 text-center text-gray-400">
+                <p>No customers found.</p>
+                <a routerLink="/customers"
+                    class="text-indigo-600 font-bold text-sm hover:underline mt-2 inline-block">Add new customer</a>
+            </div>
+            }
+        </div>
+
+        <div class="p-4 bg-gray-50 rounded-b-3xl">
+            <button (click)="isCustomerModalOpen.set(false)" class="w-full py-3 text-gray-500 font-bold">Close</button>
+        </div>
+    </div>
+</div>
+}
+
+
+@if (isReceiptModalOpen() && lastInvoice(); as inv) {
+<div class="fixed inset-0 z-[70] flex items-center justify-center p-4 no-print-overlay">
+    <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" (click)="closeReceiptModal()"></div>
+
+    <div class="relative bg-white w-full max-w-sm rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+
+        <div id="printable-receipt" class="bg-white p-8 text-black font-mono text-sm overflow-y-auto custom-scrollbar">
+            <div class="text-center mb-4">
+                <h2 class="text-xl font-bold uppercase">My Business Corp.</h2>
+                <p class="text-xs">TAX ID: 123456789-0</p>
+                <p class="text-xs">123 Main St, City Name</p>
+                <p class="text-xs">Phone: (555) 012-3456</p>
+            </div>
+
+            <div class="border-b border-dashed border-gray-300 my-4"></div>
+
+            <div class="space-y-1 text-xs">
+                <p class="flex justify-between"><span>Receipt:</span> <span class="font-bold">{{ inv.uuid.substring(0,8)
+                        }}</span></p>
+                <p class="flex justify-between"><span>Date:</span> <span>{{ inv.created_at | date:'MM/dd/yyyy HH:mm'
+                        }}</span></p>
+                <p class="flex justify-between"><span>Cashier:</span> <span>Admin</span></p>
+            </div>
+
+            <div class="border-b border-dashed border-gray-300 my-4"></div>
+
+            <div class="mb-4">
+                <p class="text-[10px] font-bold text-gray-400 uppercase">Customer:</p>
+                <p class="font-bold text-sm">{{ inv.info_name }}</p>
+                @if (inv.info_phone) { <p class="text-xs">{{ inv.info_phone }}</p> }
+            </div>
+
+            <div class="border-b border-gray-200 mb-4"></div>
+
+            <table class="w-full text-xs mb-4">
+                <thead>
+                    <tr class="border-b border-gray-100">
+                        <th class="text-left py-1">Qty</th>
+                        <th class="text-left py-1">Description</th>
+                        <th class="text-right py-1">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of inv.items; track item.product_id) {
+                    <tr>
+                        <td class="py-1">{{ item.qty }}</td>
+                        <td class="py-1">{{ item.name }}</td>
+                        <td class="py-1 text-right">{{ (item.price * item.qty) | currency }}</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="border-b border-dashed border-gray-300 my-4"></div>
+
+            <div class="space-y-1">
+                <div class="flex justify-between text-xs"><span>Subtotal:</span> <span>{{ inv.subtotal | currency
+                        }}</span></div>
+                <div class="flex justify-between text-xs"><span>Tax (VAT):</span> <span>{{ inv.vat | currency }}</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold"><span>TOTAL:</span> <span>{{ inv.payable | currency
+                        }}</span></div>
+            </div>
+
+            <div class="border-b border-dashed border-gray-300 my-4"></div>
+
+            <div class="text-xs space-y-1 italic">
+                <div class="flex justify-between"><span>Payment Method:</span> <span>{{ inv.payment_method }}</span>
+                </div>
+                <div class="flex justify-between"><span>Amount Paid:</span> <span>{{ inv.paid | currency }}</span></div>
+                <div class="flex justify-between font-bold"><span>Change:</span> <span>{{ inv.change | currency
+                        }}</span></div>
+            </div>
+
+            <div class="text-center mt-8 space-y-1">
+                <p class="text-xs font-bold">Thank you for your purchase!</p>
+                <p class="text-[10px] text-gray-400 italic">This is not a formal tax invoice</p>
+            </div>
+        </div>
+
+        <div class="p-4 bg-gray-50 border-t flex gap-3 no-print">
+            <button (click)="closeReceiptModal()"
+                class="flex-1 py-3 font-bold text-gray-500 hover:bg-gray-100 rounded-xl transition-colors">
+                Cerrar
+            </button>
+            <button (click)="printReceipt()"
+                class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
+                    </path>
+                </svg>
+                Print
+            </button>
+        </div>
+    </div>
+</div>
+
+
+}
